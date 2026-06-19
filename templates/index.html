@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View Google BigQuery Release Notes, filter by category or keywords, and quickly share updates to Twitter.">
+    <title>BigQuery Release Notes Explorer</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-card-hover: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            
+            --color-violet: #8b5cf6;
+            --color-cyan: #06b6d4;
+            --color-emerald: #10b981;
+            --color-amber: #f59e0b;
+            --color-rose: #f43f5e;
+            --color-blue: #3b82f6;
+            
+            --color-feature: #10b981;
+            --color-announcement: #3b82f6;
+            --color-issue: #f59e0b;
+            --color-deprecation: #f43f5e;
+            --color-general: #8b5cf6;
+
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+        }
+
+        /* Container Layout */
+        .app-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 6rem;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--color-cyan), var(--color-violet));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.3));
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #ffffff, #e5e7eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Status Indicator & Controls */
+        .meta-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--color-emerald);
+            box-shadow: 0 0 8px var(--color-emerald);
+        }
+
+        .status-dot.loading {
+            background-color: var(--color-amber);
+            box-shadow: 0 0 8px var(--color-amber);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Search & Filter Bar */
+        .filter-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(12px);
+            margin-bottom: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: var(--transition-smooth);
+        }
+
+        .filter-section:hover {
+            border-color: var(--border-hover);
+        }
+
+        .filter-row-top {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex-grow: 1;
+            min-width: 250px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .search-input:focus {
+            border-color: var(--color-violet);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            border: 1px solid transparent;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-violet) 0%, #7c3aed 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-hover);
+        }
+
+        .filter-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tag-btn {
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            transition: var(--transition-smooth);
+        }
+
+        .tag-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .tag-btn.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: #d8b4fe;
+            font-weight: 600;
+        }
+
+        /* Feed & Card System */
+        .notes-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        .date-group {
+            position: relative;
+        }
+
+        .date-header {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.01em;
+        }
+
+        .date-header i {
+            color: var(--color-cyan);
+            font-size: 0.95rem;
+        }
+
+        .date-line {
+            flex-grow: 1;
+            height: 1px;
+            background: linear-gradient(to right, rgba(6, 182, 212, 0.2), transparent);
+        }
+
+        .day-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Individual Update Card */
+        .update-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition-smooth);
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+
+        .update-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--type-color, var(--color-general));
+        }
+
+        .update-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-hover);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            background: var(--bg-card-hover);
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .badge-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            background: rgba(var(--badge-rgb), 0.12);
+            color: var(--type-color);
+            border: 1px solid rgba(var(--badge-rgb), 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Checkbox customization */
+        .selection-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .selection-checkbox {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkbox-custom {
+            height: 20px;
+            width: 20px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+            margin-right: 0.5rem;
+        }
+
+        .selection-container:hover .checkbox-custom {
+            border-color: var(--color-violet);
+            background-color: rgba(139, 92, 246, 0.05);
+        }
+
+        .selection-checkbox:checked ~ .checkbox-custom {
+            background-color: var(--color-violet);
+            border-color: var(--color-violet);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        .checkbox-custom::after {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: white;
+            font-size: 0.75rem;
+            display: none;
+        }
+
+        .selection-checkbox:checked ~ .checkbox-custom::after {
+            display: block;
+        }
+
+        .select-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .selection-checkbox:checked ~ .select-label {
+            color: #d8b4fe;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+            font-size: 0.95rem;
+            color: #e5e7eb;
+        }
+
+        .card-body p {
+            margin-bottom: 0.75rem;
+        }
+
+        .card-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .card-body code {
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #f472b6;
+        }
+
+        .card-body a {
+            color: var(--color-cyan);
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(6, 182, 212, 0.4);
+            transition: var(--transition-smooth);
+        }
+
+        .card-body a:hover {
+            color: #22d3ee;
+            border-bottom-style: solid;
+            border-bottom-color: #22d3ee;
+        }
+
+        .card-footer {
+            padding: 0.75rem 1.25rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.02);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-tweet-small {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: rgba(29, 155, 240, 0.1);
+            color: #1d9bf0;
+            border: 1px solid rgba(29, 155, 240, 0.2);
+        }
+
+        .btn-tweet-small:hover {
+            background: #1d9bf0;
+            color: #ffffff;
+            border-color: #1d9bf0;
+            transform: translateY(-1px);
+        }
+
+        /* Spinner & Loading states */
+        .spinner {
+            animation: rotate 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes rotate {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5rem 0;
+            gap: 1.5rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(139, 92, 246, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--color-violet);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Floating Bottom Action Bar */
+        .floating-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid var(--color-violet);
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.15);
+            backdrop-filter: blur(16px);
+            z-index: 100;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: max-content;
+            max-width: 90vw;
+        }
+
+        .floating-bar.active {
+            bottom: 2rem;
+        }
+
+        .floating-info {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #d8b4fe;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .floating-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-tweet-multi {
+            background: #1d9bf0;
+            color: #ffffff;
+            border-radius: 9999px;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(29, 155, 240, 0.3);
+        }
+
+        .btn-tweet-multi:hover {
+            background: #1a8cd8;
+            box-shadow: 0 6px 14px rgba(29, 155, 240, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-clear-selection {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-clear-selection:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Modal Styles for Twitter Composer */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(5, 7, 12, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 550px;
+            max-width: 90vw;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.1);
+            transform: scale(0.95);
+            transition: var(--transition-smooth);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1d9bf0;
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-close-modal:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .composer-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .composer-textarea {
+            width: 100%;
+            height: 140px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+        }
+
+        .composer-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .composer-tools {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .tool-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: #d8b4fe;
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        /* Circular Character Limit Ring */
+        .limit-ring-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .character-count {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .character-count.warning {
+            color: var(--color-amber);
+            font-weight: 600;
+        }
+
+        .character-count.danger {
+            color: var(--color-rose);
+            font-weight: 700;
+        }
+
+        .progress-ring {
+            width: 24px;
+            height: 24px;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toast {
+            background: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(8px);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            border-left: 4px solid var(--color-emerald);
+        }
+
+        .toast-error {
+            border-left: 4px solid var(--color-rose);
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        .toast-success i {
+            color: var(--color-emerald);
+        }
+
+        .toast-error i {
+            color: var(--color-rose);
+        }
+
+        /* Utility Styles */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 1.5rem 1rem 5rem;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .meta-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .filter-row-top {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-wrapper {
+                width: 100%;
+            }
+
+            .floating-bar {
+                width: 90vw;
+                border-radius: 16px;
+                flex-direction: column;
+                gap: 0.75rem;
+                padding: 1rem;
+            }
+
+            .floating-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .floating-actions .btn {
+                flex: 1;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo-area">
+                <i class="fa-solid fa-database logo-icon"></i>
+                <div>
+                    <h1 id="main-heading">BigQuery Release Notes</h1>
+                    <p class="tagline">Explore Google BigQuery updates, search features, and share to X / Twitter</p>
+                </div>
+            </div>
+            <div class="meta-controls">
+                <div class="status-badge">
+                    <span id="status-dot" class="status-dot"></span>
+                    <span id="status-text">Connected</span>
+                </div>
+                <button id="btn-refresh" class="btn btn-secondary" onclick="fetchNotes(true)" title="Refresh Release Notes">
+                    <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters Section -->
+        <section class="filter-section" aria-label="Filters">
+            <div class="filter-row-top">
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search update description, text or dates..." oninput="handleFilterChange()">
+                </div>
+                <div class="tag-btn active" id="btn-all-notes" onclick="setFilterType('All')">
+                    All Updates
+                </div>
+            </div>
+            
+            <div class="filter-tags">
+                <span class="filter-label">Categories:</span>
+                <button class="tag-btn" id="filter-Feature" onclick="setFilterType('Feature')">Features</button>
+                <button class="tag-btn" id="filter-Announcement" onclick="setFilterType('Announcement')">Announcements</button>
+                <button class="tag-btn" id="filter-Issue" onclick="setFilterType('Issue')">Issues</button>
+                <button class="tag-btn" id="filter-Deprecation" onclick="setFilterType('Deprecation')">Deprecations</button>
+                <button class="tag-btn" id="filter-Update" onclick="setFilterType('Update')">General Updates</button>
+            </div>
+        </section>
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen hidden">
+            <div class="loading-spinner"></div>
+            <p style="color: var(--text-secondary);">Fetching latest updates from Google feeds...</p>
+        </div>
+
+        <!-- Release Notes Feed -->
+        <main id="notes-feed" class="notes-feed">
+            <!-- Dynamically populated -->
+        </main>
+    </div>
+
+    <!-- Floating Action Bar for multi-selection -->
+    <div id="floating-bar" class="floating-bar">
+        <div class="floating-info">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="selected-count">0 updates selected</span>
+        </div>
+        <div class="floating-actions">
+            <button class="btn btn-clear-selection" onclick="clearSelection()">Clear</button>
+            <button class="btn btn-tweet-multi" onclick="openTweetComposer(true)">
+                <i class="fa-brands fa-x-twitter"></i> Tweet Composer
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Twitter Composer -->
+    <div id="composer-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-brands fa-x-twitter"></i>
+                    <span>Draft Tweet</span>
+                </div>
+                <button class="btn-close-modal" onclick="closeTweetComposer()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="composer-card">
+                    <textarea id="composer-textarea" class="composer-textarea" placeholder="What's happening?" oninput="updateCharacterCount()"></textarea>
+                    
+                    <div class="composer-footer">
+                        <div class="composer-tools">
+                            <button class="tool-btn" onclick="insertHashtag('#BigQuery')">#BigQuery</button>
+                            <button class="tool-btn" onclick="insertHashtag('#GCP')">#GCP</button>
+                            <button class="tool-btn" onclick="insertHashtag('#CloudRun')">#CloudRun</button>
+                            <button class="tool-btn" onclick="insertHashtag('#GoogleCloud')">#GoogleCloud</button>
+                        </div>
+                        
+                        <div class="limit-ring-container">
+                            <span id="char-counter" class="character-count">280</span>
+                            <svg class="progress-ring" width="24" height="24">
+                                <circle class="progress-ring__circle" stroke="#8b5cf6" stroke-width="2" fill="transparent" r="9" cx="12" cy="12"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                    <i class="fa-solid fa-circle-info" style="color: var(--color-cyan); margin-right: 0.25rem;"></i>
+                    Clicking 'Share on X' will launch a new browser tab with your tweet context prefilled.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTweetComposer()">Cancel</button>
+                <button id="btn-share-tweet" class="btn btn-primary" onclick="publishTweet()">
+                    <i class="fa-brands fa-x-twitter"></i> Share on X
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Frontend Application Logic -->
+    <script>
+        let allNotes = [];
+        let filterType = 'All';
+        let searchQuery = '';
+        let selectedUpdates = new Map(); // Key: 'note-id-idx', Value: {date, type, plain_text, link}
+
+        // Circular progress bar configuration
+        const circle = document.querySelector('.progress-ring__circle');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchNotes(false);
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+            toast.innerHTML = `
+                <i class="fa-solid ${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 50);
+            
+            // Remove after delay
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
+            
+            // Color changing based on limit
+            if (percent >= 100) {
+                circle.style.stroke = 'var(--color-rose)';
+            } else if (percent >= 85) {
+                circle.style.stroke = 'var(--color-amber)';
+            } else {
+                circle.style.stroke = 'var(--color-violet)';
+            }
+        }
+
+        async function fetchNotes(forceRefresh = false) {
+            const feedContainer = document.getElementById('notes-feed');
+            const loadingScreen = document.getElementById('loading-screen');
+            const refreshIcon = document.getElementById('refresh-icon');
+            const btnRefresh = document.getElementById('btn-refresh');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+
+            // Visual loading states
+            refreshIcon.classList.add('spinner');
+            btnRefresh.disabled = true;
+            statusDot.className = 'status-dot loading';
+            statusText.innerText = 'Fetching...';
+
+            if (allNotes.length === 0) {
+                feedContainer.classList.add('hidden');
+                loadingScreen.classList.remove('hidden');
+            }
+
+            try {
+                const response = await fetch(`/api/notes?refresh=${forceRefresh}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    allNotes = result.notes;
+                    renderNotes();
+                    statusDot.className = 'status-dot';
+                    statusText.innerText = result.status === 'fresh' ? 'Live Data Loaded' : 'Cached Data Loaded';
+                    
+                    if (forceRefresh) {
+                        showToast("BigQuery Release notes fetched fresh!");
+                    }
+                } else {
+                    console.error("API Error: ", result.error);
+                    showToast(`Failed to parse release notes: ${result.error}`, 'error');
+                    statusDot.className = 'status-dot';
+                    statusDot.style.backgroundColor = 'var(--color-rose)';
+                    statusDot.style.boxShadow = '0 0 8px var(--color-rose)';
+                    statusText.innerText = 'Connection Error';
+                }
+            } catch (err) {
+                console.error("Network Error: ", err);
+                showToast("Network error trying to fetch release notes.", 'error');
+                statusDot.className = 'status-dot';
+                statusDot.style.backgroundColor = 'var(--color-rose)';
+                statusDot.style.boxShadow = '0 0 8px var(--color-rose)';
+                statusText.innerText = 'Offline';
+            } finally {
+                refreshIcon.classList.remove('spinner');
+                btnRefresh.disabled = false;
+                loadingScreen.classList.add('hidden');
+                feedContainer.classList.remove('hidden');
+            }
+        }
+
+        function setFilterType(type) {
+            filterType = type;
+            
+            // Update tag buttons CSS active state
+            const categoryButtons = ['Feature', 'Announcement', 'Issue', 'Deprecation', 'Update'];
+            categoryButtons.forEach(cat => {
+                const btn = document.getElementById(`filter-${cat}`);
+                if (btn) {
+                    if (cat === type) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+            
+            const btnAll = document.getElementById('btn-all-notes');
+            if (type === 'All') {
+                btnAll.classList.add('active');
+            } else {
+                btnAll.classList.remove('active');
+            }
+
+            renderNotes();
+        }
+
+        function handleFilterChange() {
+            searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            renderNotes();
+        }
+
+        // Color coding configurations for UI types
+        function getTypeStyles(type) {
+            const cleanType = type.toLowerCase();
+            if (cleanType.includes('feature')) return { color: 'var(--color-feature)', rgb: '16, 185, 129', icon: 'fa-star' };
+            if (cleanType.includes('announcement')) return { color: 'var(--color-announcement)', rgb: '59, 130, 246', icon: 'fa-bullhorn' };
+            if (cleanType.includes('issue') || cleanType.includes('bug')) return { color: 'var(--color-issue)', rgb: '245, 158, 11', icon: 'fa-circle-exclamation' };
+            if (cleanType.includes('deprecation') || cleanType.includes('remove')) return { color: 'var(--color-deprecation)', rgb: '244, 63, 94', icon: 'fa-triangle-exclamation' };
+            return { color: 'var(--color-general)', rgb: '139, 92, 246', icon: 'fa-rocket' };
+        }
+
+        function renderNotes() {
+            const feedContainer = document.getElementById('notes-feed');
+            feedContainer.innerHTML = '';
+            
+            let matchCount = 0;
+
+            allNotes.forEach(entry => {
+                // Filter updates within the entry
+                const filteredUpdates = entry.updates.filter(update => {
+                    const matchesCategory = filterType === 'All' || update.type.toLowerCase().includes(filterType.toLowerCase());
+                    
+                    let matchesSearch = true;
+                    if (searchQuery) {
+                        const inType = update.type.toLowerCase().includes(searchQuery);
+                        const inDesc = update.description_html.toLowerCase().includes(searchQuery);
+                        const inDate = entry.date.toLowerCase().includes(searchQuery);
+                        matchesSearch = inType || inDesc || inDate;
+                    }
+                    
+                    return matchesCategory && matchesSearch;
+                });
+
+                if (filteredUpdates.length === 0) return;
+                
+                matchCount += filteredUpdates.length;
+
+                // Create Date Group Element
+                const dateGroup = document.createElement('div');
+                dateGroup.className = 'date-group';
+                
+                dateGroup.innerHTML = `
+                    <div class="date-header">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        <span>${entry.date}</span>
+                        <div class="date-line"></div>
+                    </div>
+                    <div class="day-cards"></div>
+                `;
+
+                const cardsContainer = dateGroup.querySelector('.day-cards');
+
+                filteredUpdates.forEach((update, idx) => {
+                    const uniqueId = `${entry.id}-${idx}`;
+                    const styles = getTypeStyles(update.type);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'update-card';
+                    card.style.setProperty('--type-color', styles.color);
+                    card.style.setProperty('--badge-rgb', styles.rgb);
+                    
+                    const isChecked = selectedUpdates.has(uniqueId) ? 'checked' : '';
+
+                    // Strip HTML tag strings to raw text for shareable quotes
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(update.description_html, 'text/html');
+                    const cleanText = doc.body.textContent || doc.body.innerText || "";
+                    
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <span class="badge-type">
+                                <i class="fa-solid ${styles.icon}"></i> ${update.type}
+                            </span>
+                            
+                            <div class="card-actions">
+                                <label class="selection-container" for="chk-${uniqueId}">
+                                    <input type="checkbox" id="chk-${uniqueId}" class="selection-checkbox" ${isChecked} onchange="toggleSelectUpdate('${uniqueId}', '${entry.date}', '${update.type}', ${JSON.stringify(cleanText).replace(/"/g, '&quot;')}, '${entry.link}')">
+                                    <span class="checkbox-custom"></span>
+                                    <span class="select-label">Select</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            ${update.description_html}
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-tweet-small" onclick="singleTweet('${entry.date}', '${update.type}', ${JSON.stringify(cleanText).replace(/"/g, '&quot;')}, '${entry.link}')">
+                                <i class="fa-brands fa-x-twitter"></i> Tweet Update
+                            </button>
+                        </div>
+                    `;
+                    
+                    cardsContainer.appendChild(card);
+                });
+
+                feedContainer.appendChild(dateGroup);
+            });
+
+            if (matchCount === 0) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <h3>No release notes match your filters</h3>
+                        <p>Try refining your search keyword or selecting "All Updates"</p>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleSelectUpdate(id, date, type, text, link) {
+            const checkbox = document.getElementById(`chk-${id}`);
+            if (checkbox.checked) {
+                selectedUpdates.set(id, { date, type, text, link });
+            } else {
+                selectedUpdates.delete(id);
+            }
+            updateFloatingBar();
+        }
+
+        function clearSelection() {
+            selectedUpdates.clear();
+            
+            // Uncheck all boxes in DOM
+            const checkboxes = document.querySelectorAll('.selection-checkbox');
+            checkboxes.forEach(chk => chk.checked = false);
+            
+            updateFloatingBar();
+        }
+
+        function updateFloatingBar() {
+            const bar = document.getElementById('floating-bar');
+            const countSpan = document.getElementById('selected-count');
+            
+            if (selectedUpdates.size > 0) {
+                countSpan.innerText = `${selectedUpdates.size} update${selectedUpdates.size > 1 ? 's' : ''} selected`;
+                bar.classList.add('active');
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        function truncateText(str, maxLength) {
+            if (str.length <= maxLength) return str;
+            return str.substr(0, maxLength - 3) + '...';
+        }
+
+        function generateTweetText(updatesArray) {
+            if (updatesArray.length === 1) {
+                const item = updatesArray[0];
+                const header = `[BigQuery ${item.type} • ${item.date}]\n`;
+                const link = `\nSource: ${item.link}`;
+                const remainingLength = 280 - header.length - link.length - 2 - 22; // allowance for space/hashes/links
+                
+                // Truncate the core text
+                const truncatedText = truncateText(item.text.replace(/\s+/g, ' ').trim(), remainingLength);
+                return `${header}${truncatedText}${link} #GCP #BigQuery`;
+            } else {
+                // Thread format or consolidated summary
+                let tweetText = `BigQuery Release Updates (${updatesArray.length} items):\n\n`;
+                updatesArray.forEach((item, idx) => {
+                    const itemSummary = `• [${item.type}] ${truncateText(item.text, 50)}\n`;
+                    if (tweetText.length + itemSummary.length + 30 <= 280) {
+                        tweetText += itemSummary;
+                    }
+                });
+                tweetText += `\nSource: ${updatesArray[0].link} #GoogleCloud`;
+                return tweetText;
+            }
+        }
+
+        function singleTweet(date, type, text, link) {
+            const draft = generateTweetText([{ date, type, text, link }]);
+            
+            const textarea = document.getElementById('composer-textarea');
+            textarea.value = draft;
+            
+            openTweetComposer(false);
+        }
+
+        function openTweetComposer(fromMulti = false) {
+            const overlay = document.getElementById('composer-modal');
+            const textarea = document.getElementById('composer-textarea');
+            
+            if (fromMulti) {
+                const selectedItems = Array.from(selectedUpdates.values());
+                textarea.value = generateTweetText(selectedItems);
+            }
+            
+            overlay.classList.add('active');
+            updateCharacterCount();
+        }
+
+        function closeTweetComposer() {
+            document.getElementById('composer-modal').classList.remove('active');
+        }
+
+        function updateCharacterCount() {
+            const textarea = document.getElementById('composer-textarea');
+            const counter = document.getElementById('char-counter');
+            const btnShare = document.getElementById('btn-share-tweet');
+            
+            const count = textarea.value.length;
+            const remaining = 280 - count;
+            counter.innerText = remaining;
+            
+            // Update circle progress bar
+            const percentage = Math.min((count / 280) * 100, 100);
+            setProgress(percentage);
+            
+            if (remaining < 0) {
+                counter.className = 'character-count danger';
+                btnShare.disabled = true;
+                btnShare.style.opacity = 0.5;
+                btnShare.style.cursor = 'not-allowed';
+            } else if (remaining <= 30) {
+                counter.className = 'character-count warning';
+                btnShare.disabled = false;
+                btnShare.style.opacity = 1;
+                btnShare.style.cursor = 'pointer';
+            } else {
+                counter.className = 'character-count';
+                btnShare.disabled = false;
+                btnShare.style.opacity = 1;
+                btnShare.style.cursor = 'pointer';
+            }
+        }
+
+        function insertHashtag(tag) {
+            const textarea = document.getElementById('composer-textarea');
+            if (!textarea.value.includes(tag)) {
+                textarea.value = textarea.value.trim() + ' ' + tag;
+                updateCharacterCount();
+            }
+        }
+
+        function publishTweet() {
+            const text = document.getElementById('composer-textarea').value;
+            const encodedText = encodeURIComponent(text);
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedText}`;
+            
+            window.open(twitterUrl, '_blank');
+            closeTweetComposer();
+            showToast("Launched X/Twitter composer in a new tab!");
+        }
+    </script>
+</body>
+</html>
