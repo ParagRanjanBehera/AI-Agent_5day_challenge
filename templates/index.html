@@ -505,6 +505,22 @@
             transform: translateY(-1px);
         }
 
+        .btn-copy-small {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-copy-small:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
         /* Spinner & Loading states */
         .spinner {
             animation: rotate 1s linear infinite;
@@ -1250,7 +1266,10 @@
                         <div class="card-body">
                             ${update.description_html}
                         </div>
-                        <div class="card-footer">
+                        <div class="card-footer" style="gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-copy-small" onclick="copyUpdateToClipboard('${entry.date}', '${update.type}', ${JSON.stringify(cleanText).replace(/"/g, '&quot;')}, '${entry.link}', this)">
+                                <i class="fa-regular fa-clipboard"></i> Copy
+                            </button>
                             <button class="btn btn-tweet-small" onclick="singleTweet('${entry.date}', '${update.type}', ${JSON.stringify(cleanText).replace(/"/g, '&quot;')}, '${entry.link}')">
                                 <i class="fa-brands fa-x-twitter"></i> Tweet Update
                             </button>
@@ -1269,6 +1288,9 @@
                         <i class="fa-solid fa-folder-open"></i>
                         <h3>No release notes match your filters</h3>
                         <p>Try refining your search keyword or selecting "All Updates"</p>
+                        <button class="btn btn-secondary" style="margin-top: 1.25rem;" onclick="resetAllFilters()">
+                            <i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters
+                        </button>
                     </div>
                 `;
             }
@@ -1408,6 +1430,31 @@
             window.open(twitterUrl, '_blank');
             closeTweetComposer();
             showToast("Launched X/Twitter composer in a new tab!");
+        }
+
+        function resetAllFilters() {
+            document.getElementById('search-input').value = '';
+            searchQuery = '';
+            setFilterType('All');
+        }
+
+        function copyUpdateToClipboard(date, type, text, link, button) {
+            const formattedText = `[BigQuery ${type} • ${date}]\n${text.trim()}\n\nSource: ${link}`;
+            navigator.clipboard.writeText(formattedText).then(() => {
+                showToast("Copied release note to clipboard!");
+                
+                // Provide visual feedback on the button
+                const originalHTML = button.innerHTML;
+                button.innerHTML = `<i class="fa-solid fa-check" style="color: var(--color-emerald)"></i> Copied!`;
+                button.disabled = true;
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error("Clipboard copy failed: ", err);
+                showToast("Failed to copy text.", "error");
+            });
         }
     </script>
 </body>
